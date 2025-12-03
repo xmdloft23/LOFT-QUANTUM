@@ -60,7 +60,7 @@ Want to run it locally or on your own server? Grab the complete package instantl
     <img src="https://img.shields.io/badge/📦 DOWNLOAD HERE-ff0000?style=for-the-badge&logo=dropbox&logoColor=white" height="55"/>
   </a>
   <br><br>
-  <img src="https://i.imgur.com/6z9bD0E.gif" width="200"/>
+  <img src="https://files.catbox.moe/snt5ow.jpg" width="200"/>
 </div>
 
 <br>
