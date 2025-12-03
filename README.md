@@ -23,6 +23,10 @@ Zero setup · 24/7 online · Lightning fast
   <a href="https://bot-hosting.net/?aff=1068419752923508776">
     <img src="https://img.shields.io/badge/⚡ BOT HOSTING NET (Instant)-00ff88?style=for-the-badge&logo=rocket&logoColor=black" alt="Deploy Instant"/>
   </a>
+  <br><br>
+  <a href="https://youtu.be/meE_EWEuyGk?si=gJxaiFZlEMluL1oB">
+    <img src="https://img.shields.io/badge/🎥 View Tutorial (YouTube)-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="View Tutorial"/>
+  </a>
 </div>
 
 <br>
