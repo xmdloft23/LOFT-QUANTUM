@@ -69,7 +69,7 @@ const tagCommand = require('./loftcore/tag');
 const tagNotAdminCommand = require('./loftcore/tagnotadmin');
 const hideTagCommand = require('./loftcore/hidetag');
 const weatherCommand = require('./loftcore/weather');
-const payCommand = require('./loftcore/pay');
+const halotelCommand = require('./loftcore/halotel');
 const kickCommand = require('./loftcore/kick');
 // quote command removed
 const { complimentCommand } = require('./loftcore/compliment');
@@ -135,7 +135,7 @@ const phoneCommand = require('./loftcore/phone');
 global.packname = settings.packname;
 global.author = settings.author;
 global.channelLink = "https://whatsapp.com/channel/0029Vb6B9xFCxoAseuG1g610";
-global.ytch = "ʟᴏꜰᴛ Qᴜᴀɴᴛᴜᴍ™";
+global.ytch = "MICKEY";
 
 
 
@@ -184,7 +184,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             const buttonHandlers = {
                 'channel': async () => {
                     await sock.sendMessage(chatId, { 
-                        text: '📢 *Join our Channel:*\nhttps://whatsapp.com/channel/0029Vb6B9xFCxoAseuG1g610' 
+                        text: '📢 *Join our Channel:*\nhttps://whatsapp.com/channel/0029Va90zAnIHphOuO8Msp3A' 
                     }, { quoted: message });
                 },
                 'owner': async () => {
@@ -251,7 +251,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 // Reuse the same buttonHandlers logic for common ids
                 const listHandlers = {
                     'channel': async () => {
-                        await sock.sendMessage(chatId, { text: '📢 *Join our Channel:*\nhttps://whatsapp.com/channel/0029Vb6B9xFCxoAseuG1g610' }, { quoted: message });
+                        await sock.sendMessage(chatId, { text: '📢 *Join our Channel:*\nhttps://whatsapp.com/channel/0029Va90zAnIHphOuO8Msp3A' }, { quoted: message });
                     },
                     'owner': async () => {
                         const ownerCommand = require('./loftcore/owner');
@@ -392,7 +392,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             const isMenuReply = quotedText && (
                 quotedText.includes('command categories') ||
                 quotedText.includes('reply with number') ||
-                quotedText.includes('available loftcore') ||
+                quotedText.includes('available commands') ||
                 quotedText.includes('command') ||
                 /\d+.*command|category/.test(quotedText)  // e.g., "1 Fun loftcore"
             );
@@ -419,10 +419,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                             const per = parseInt(meta.per || String(8), 10);
                             const page = parseInt(meta.page || '1', 10);
                             if (catIndex >= 0 && catIndex < categories.length) {
-                                const loftcore = categories[catIndex].loftcore;
+                                const Commands= categories[catIndex].Commands;
                                 const globalIndex = (page - 1) * per + (n - 1);
-                                if (globalIndex >= 0 && globalIndex < loftcore.length) {
-                                    const cmdName = loftcore[globalIndex];
+                                if (globalIndex >= 0 && globalIndex < Commands.length) {
+                                    const cmdName = Commands[globalIndex];
                                     await helpCommand(sock, chatId, message, `.help ${cmdName}`);
                                     return;
                                 }
@@ -469,8 +469,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
             // treat it as if the user sent the command with a dot. This makes both "ping" and ".ping" work.
             try {
                 const firstToken = (userMessage.split(' ')[0] || '').replace(/[^a-z0-9\-_]/gi, '').toLowerCase();
-                const knownloftcore = helpCommand.getAllloftcore ? helpCommand.getAllloftcore() : [];
-                if (firstToken && knownloftcore.includes(firstToken)) {
+                const knownCommands = helpCommand.getAllCommands ? helpCommand.getAllCommands() : [];
+                if (firstToken && knownCommands.includes(firstToken)) {
                     userMessage = '.' + userMessage; // now falls through to normal command handling
                 }
             } catch (e) {
@@ -507,12 +507,12 @@ async function handleMessages(sock, messageUpdate, printLog) {
         }
 
         // List of admin loftcore
-        const adminloftcore = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
-        const isAdminCommand = adminloftcore.some(cmd => userMessage.startsWith(cmd));
+        const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
+        const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
         // List of owner loftcore
-        const ownerloftcore = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker'];
-        const isOwnerCommand = ownerloftcore.some(cmd => userMessage.startsWith(cmd));
+        const ownerCommands = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker'];
+        const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
         let isBotAdmin = false;
@@ -777,8 +777,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     await sock.sendMessage(chatId, { text: 'Please specify a city, e.g., .weather London' }, { quoted: message });
                 }
                 break;
-            case userMessage.startsWith('.pay'):
-                await payCommand(sock, chatId, message, userMessage);
+            case userMessage.startsWith('.halotel'):
+                await halotelCommand(sock, chatId, message, userMessage);
                 break;
             case userMessage.startsWith('.phone'):
                 const phoneQuery = userMessage.slice(6).trim();
@@ -890,7 +890,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
                 await antibadwordCommand(sock, chatId, message, senderId, isSenderAdmin);
                 break;
-            // chatbot/.islam commands removed
+            // chatbot/.islam loftcore removed
             case userMessage.startsWith('.take') || userMessage.startsWith('.steal'):
                 {
                     const isSteal = userMessage.startsWith('.steal');
@@ -1262,7 +1262,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             if (commandExecuted !== false) {
                 try {
                     // Quick actions disabled (user requested). To re-enable, restore this block or use a config flag.
-                    // Previously this suggested 'Menu / Help / Owner' buttons after most commands, but it's intentionally turned off now.
+                    // Previously this suggested 'Menu / Help / Owner' buttons after most loftcore, but it's intentionally turned off now.
                 } catch (e) {
                     // Ignore errors from suggestion buttons to avoid breaking command flow
                     console.error('Suggestion buttons error:', e && e.message ? e.message : e);
@@ -1314,7 +1314,7 @@ async function handleGroupParticipantUpdate(sock, update) {
 
         // Handle join events
         if (action === 'add') {
-            // Welcome handling removed (commands/welcome.js deleted)
+            // Welcome handling removed (loftcore/welcome.js deleted)
             // previously: await handleJoinEvent(sock, id, participants);
         }
 
