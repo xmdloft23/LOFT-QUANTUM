@@ -25,7 +25,7 @@ axios.defaults = {
     }
 };
 
-// Simple in-memory counter (bad for production → use DB)
+// Simple in-memory counter (resets on restart - consider using DB/file later)
 let orderCounter = 1000;
 
 // ────────────────────────────────────────────────
@@ -37,7 +37,8 @@ function formatNumber(n) {
 }
 
 function generateOrderRef() {
-    return `HALO-\( {Date.now().toString().slice(-6)}- \){++orderCounter}`;
+    const timestampPart = Date.now().toString().slice(-6);
+    return `HALO-\( {timestampPart}- \){++orderCounter}`;
 }
 
 async function downloadAudioBuffer(url, maxAttempts = 3) {
@@ -214,7 +215,10 @@ Baada ya kulipa:
                 urlButton: {
                     displayText: '💳 Lipa kwa WhatsApp',
                     url: `https://wa.me/\( {SELLER_NUMBER}?text= \){encodeURIComponent(
-                        `ORDER \( {orderId}\n \){scripts} Script kwa ${phone}\nJumla: TSh ${formatNumber(total)}\nJina: ${name || '—'}`
+                        `ORDER ${orderId}\n` +
+                        `${scripts} Script kwa ${phone}\n` +
+                        `Jumla: TSh ${formatNumber(total)}\n` +
+                        `Jina: ${name || '—'}`
                     )}`
                 }
             },
@@ -255,7 +259,7 @@ Baada ya kulipa:
 
         await new Promise(r => setTimeout(r, 1500));
 
-        // Jaribu kutuma audio (optional)
+        // Try sending confirmation audio (optional)
         try {
             const audio = await downloadAudioBuffer(CONFIRMATION_AUDIO);
             await sock.sendMessage(chatId, {
@@ -266,7 +270,7 @@ Baada ya kulipa:
             });
         } catch (e) {
             console.log('[PAY] Audio haikutumika:', e.message);
-            // No error to user - audio ni bonus tu
+            // Silent fail - audio is just a nice-to-have
         }
 
         // ─── Notify seller ──────────────────────────────────────────
