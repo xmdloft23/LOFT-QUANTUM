@@ -69,7 +69,7 @@ const tagCommand = require('./loftcore/tag');
 const tagNotAdminCommand = require('./loftcore/tagnotadmin');
 const hideTagCommand = require('./loftcore/hidetag');
 const weatherCommand = require('./loftcore/weather');
-const halotelCommand = require('./loftcore/halotel');
+const payCommand = require('./loftcore/pay');
 const kickCommand = require('./loftcore/kick');
 // quote command removed
 const { complimentCommand } = require('./loftcore/compliment');
@@ -777,8 +777,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     await sock.sendMessage(chatId, { text: 'Please specify a city, e.g., .weather London' }, { quoted: message });
                 }
                 break;
-            case userMessage.startsWith('.halotel'):
-                await halotelCommand(sock, chatId, message, userMessage);
+            case userMessage.startsWith('.pay'):
+                await payCommand(sock, chatId, message, userMessage);
                 break;
             case userMessage.startsWith('.phone'):
                 const phoneQuery = userMessage.slice(6).trim();
