@@ -1,7 +1,7 @@
 # LOFT QUANTUM™ 2026 ⚡️
 
 <p align="center">
-  <img src="https://files.catbox.moe/km1wci.jpg" alt="Loft Quantum" width="220"/>
+  <img src="https://files.catbox.moe/km1wci.jpg" alt="Loft Quantum" width="350"/>
   <br><br>
   <strong>Next-gen WhatsApp + Telegram Bot</strong>
 </p>
