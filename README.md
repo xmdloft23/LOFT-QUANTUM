@@ -1,7 +1,7 @@
 # LOFT-QUANTUM 2026
 
 <p align="center">
-  <img src="https://files.catbox.moe/snt5ow.jpg" alt="Loft Quantum Logo" width="180"/>
+  <img src="https://files.catbox.moe/km1wci.jpg" alt="Loft Quantum Logo" width="180"/>
   <br><br>
   <strong>Next-generation WhatsApp + Telegram bot</strong> with blazing-fast performance, AI-powered features, and rock-solid stability — built for professionals.
 </p>
