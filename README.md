@@ -1,4 +1,4 @@
-# ʟᴏꜰᴛ Qᴜᴀɴᴛᴜᴍ™ ⚡️ Premium Multi-Platform Bot
+# LOFT-QUANTUM 2026
 
 <p align="center">
   <img src="https://files.catbox.moe/snt5ow.jpg" alt="Loft Quantum Logo" width="180"/>
@@ -88,7 +88,7 @@ For collaborations, custom builds, or support:
     <img src="https://raw.githubusercontent.com/shizothetechie/database/main/icon/WhatsApp.png" width="80" alt="WhatsApp"/>
   </a>
   <br>
-  <strong>Shaddy – Lead Developer</strong>
+  <strong>MR LOFT – Lead Developer</strong>
 </p>
 
 ---
