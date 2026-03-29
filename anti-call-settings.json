@@ -1,0 +1,8 @@
+{
+  "rejectCalls": true,
+  "blockCaller": false,
+  "notifyAdmin": true,
+  "autoReply": "Sorry, I don't accept calls. Please send a text message instead.",
+  "blockedUsers": [],
+  "adminNumber": "255778018545@s.whatsapp.net"
+}
