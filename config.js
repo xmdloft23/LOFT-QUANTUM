@@ -7,7 +7,7 @@ function toBool(val, defaultOn = true) {
 }
 
 module.exports = {
-    SESSION_ID:            process.env.SESSION_ID || "sila~iMdxmBCL#wjcjz-jTH9J-6q1jacxGDd6sOEnAXdvDDn8BtLtlFsg",
+    SESSION_ID:            process.env.SESSION_ID || "",
     // PREFIX supports comma-separated list: ".,!,/,?"
     // Use "any" to accept any leading symbol, or "" / "none" for no prefix
     PREFIX:                process.env.PREFIX || ".",
