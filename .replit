@@ -27,7 +27,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node silva.js"
+args = "node index.js"
 
 [[ports]]
 localPort = 5000
