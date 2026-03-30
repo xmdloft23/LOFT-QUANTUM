@@ -1,0 +1,29 @@
+databases:
+  - name: loft-db
+    plan: free
+    databaseName: loft
+    user: loft
+
+services:
+  - type: web
+    name: loft-quantum
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: SESSION_ID
+        sync: false
+      - key: MODE
+        value: public
+      - key: TIME_ZONE
+        value: Africa/Nairobi
+      - key: AUTO_LIKE_STATUS
+        value: "true"
+      - key: AUTO_READ_STATUS
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: loft-db
+          property: connectionString
