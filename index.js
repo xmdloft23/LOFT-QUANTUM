@@ -125,7 +125,7 @@ let store;
 
 logger.level = "silent";
 app.use(express.static("loft"));
-app.get("/", (req, res) => res.sendFile(__dirname + "/loft/loftxmd.html"));
+app.get("/", (req, res) => res.sendFile(__dirname + "/loft/loft.html"));
 app.get("/health", (req, res) =>
     res.status(200).json({ status: "alive", uptime: process.uptime() }),
 );
