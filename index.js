@@ -14,6 +14,7 @@ const fs = require('fs');
 const readline = require('readline');
 const path = require('path');
 const config = require('./settings/config');
+const usePairingCode = true; 
 
 const { smsg } = require('./system/storage.js');
 
