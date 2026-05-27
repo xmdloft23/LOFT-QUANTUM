@@ -1,0 +1,16 @@
+async function getContextInfo(mentionedJid = []) {
+    const botName = await getSetting("BOT_NAME") || "LOFT—OSS";
+    const channelJid = await getSetting("NEWSLETTER_JID") || "120363398106360290@newsletter";
+    return {
+        mentionedJid,
+        forwardingScore: 1,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: channelJid,
+            newsletterName: botName,
+            serverMessageId: -1
+        }
+    };
+}
+
+module.exports = { getContextInfo };

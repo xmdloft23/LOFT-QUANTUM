@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>LOFT QUANTUM • WHATSAPP BOT ULTRA</title>
+
+    <!-- SEO & Meta Tags -->
+    <meta name="description" content="LOFT-OSS WABOT - Advanced WhatsApp Bot Interface. Live status, bot features, and quantum performance.">
+    <meta name="author" content="MR LOFT">
+    <meta property="og:title" content="LOFT QUANTUM | WA BOT">
+    <meta property="og:description" content="LOFT-OSS V10 - Your ultimate WhatsApp automation suite. Active, intelligent, unstoppable.">
+    <meta property="og:image" content="https://telegra.ph/file/c2a4d8d65722553da4c89.jpg">
+    <link rel="icon" href="https://telegra.ph/file/c2a4d8d65722553da4c89.jpg">
+
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #0a0a0a, #0f0f1a, #1a0b2e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* animated grain texture */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJmIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjUiIG51bU9jdGF2ZXM9IjMiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjZikiIG9wYWNpdHk9IjAuMDYiLz48L3N2Zz4=');
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* main container */
+        .quantum-container {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(10, 10, 20, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 3.5rem;
+            padding: 2rem 2rem 2.5rem;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5), 0 0 0 1px rgba(157, 78, 221, 0.2);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(156, 80, 230, 0.3);
+            z-index: 2;
+        }
+
+        /* header glow */
+        .glow-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .glow {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #e0aaff, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
+            letter-spacing: -0.5px;
+            animation: softPulse 3s infinite alternate;
+        }
+
+        @keyframes softPulse {
+            0% { text-shadow: 0 0 2px #b77cff, 0 0 4px #9b4dff; opacity: 0.95; }
+            100% { text-shadow: 0 0 15px #c084fc, 0 0 25px #a855f7; opacity: 1; }
+        }
+
+        .sub {
+            color: #c3b8e6;
+            font-weight: 400;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* live info card */
+        .live-card {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 2rem;
+            padding: 1.2rem 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .live-card:hover {
+            transform: translateY(-3px);
+            border-color: #c084fc;
+        }
+
+        .current-info {
+            font-family: 'Inter', monospace;
+            font-weight: 600;
+            font-size: 1.2rem;
+            background: linear-gradient(120deg, #f0eaff, #d9c8ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-live {
+            background: #8b5cf6;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 0 8px #a855f7;
+        }
+
+        .badge-live i {
+            font-size: 0.7rem;
+        }
+
+        /* features grid */
+        .features-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid #c084fc;
+            padding-left: 1rem;
+            color: #ede9fe;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .feature-card {
+            background: rgba(20, 12, 36, 0.65);
+            backdrop-filter: blur(8px);
+            border-radius: 1.5rem;
+            padding: 1.2rem 1.2rem;
+            transition: all 0.25s ease;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .feature-card:hover {
+            background: rgba(50, 30, 80, 0.75);
+            border-color: #a78bfa;
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5);
+        }
+
+        .feature-icon {
+            font-size: 2.2rem;
+            color: #c084fc;
+            width: 48px;
+            text-align: center;
+            filter: drop-shadow(0 0 4px #a855f7);
+        }
+
+        .feature-text h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.2rem;
+        }
+
+        .feature-text p {
+            font-size: 0.8rem;
+            color: #c7b9ff;
+            line-height: 1.3;
+        }
+
+        /* stats & uptime */
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            justify-content: space-between;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-glow {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 1.8rem;
+            padding: 1rem 1.2rem;
+            text-align: center;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            backdrop-filter: blur(5px);
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #e9d5ff;
+            letter-spacing: 1px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #bfaaff;
+            margin-top: 0.3rem;
+        }
+
+        /* developer footer */
+        .developer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #b6a2d6;
+            border-top: 1px dashed rgba(139, 92, 246, 0.4);
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .developer a {
+            color: #d9b4ff;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .developer a:hover {
+            text-shadow: 0 0 6px #b77cff;
+            color: white;
+        }
+
+        .quantum-footer i {
+            margin: 0 4px;
+        }
+
+        @media (max-width: 650px) {
+            .quantum-container {
+                padding: 1.3rem;
+            }
+            .glow {
+                font-size: 1.6rem;
+            }
+            .feature-card {
+                padding: 0.9rem;
+            }
+            .live-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .blinking-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: blink 1.2s infinite;
+            box-shadow: 0 0 6px #00ff88;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1);}
+            50% { opacity: 0.3; transform: scale(0.9);}
+        }
+    </style>
+</head>
+<body>
+<div class="quantum-container">
+    <div class="glow-header">
+        <div class="glow">⚡ LOFT QUANTUM V10 ⚡</div>
+        <div class="sub">✦ NEXT-GEN WHATSAPP AUTOMATION | HYBRID AI CORE ✦</div>
+    </div>
+
+    <!-- live time + date card -->
+    <div class="live-card">
+        <div class="current-info" id="Info">Loading quantum sync...</div>
+        <div class="badge-live">
+            <span class="blinking-dot"></span>
+            <i class="fas fa-bolt"></i> ACTIVE • REAL-TIME
+        </div>
+    </div>
+
+    <!-- Bot capabilities (features) -->
+    <div class="features-section">
+        <div class="section-title">
+            <i class="fas fa-cogs" style="color:#c084fc"></i> 
+            <span>✦ BOT CAPABILITIES & MODULES ✦</span>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-robot"></i></div>
+                <div class="feature-text">
+                    <h3>AI Auto-Reply</h3>
+                    <p>Gemini & GPT powered smart conversations, contextual replies, multi-language.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-download"></i></div>
+                <div class="feature-text">
+                    <h3>Media Saver</h3>
+                    <p>Auto-download status, images, videos, documents — with custom filters.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="feature-text">
+                    <h3>Group Manager</h3>
+                    <p>Welcome/Goodbye, anti-link, anti-spam, kick, promote, and custom commands.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-music"></i></div>
+                <div class="feature-text">
+                    <h3>Audio/Video Tools</h3>
+                    <p>YouTube audio download, voice changer, sticker maker, and voice notes.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-search"></i></div>
+                <div class="feature-text">
+                    <h3>Web Scraper</h3>
+                    <p>Latest news, Wikipedia, movie info, memes, anime quotes & more.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="feature-text">
+                    <h3>Anti-Ban & Safety</h3>
+                    <p>Cloud protection, session backup, auto-reconnect & message queues.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-qrcode"></i></div>
+                <div class="feature-text">
+                    <h3>Instant Login</h3>
+                    <p>QR pairing + pairing code, multi-device support, always online simulation.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-gamepad"></i></div>
+                <div class="feature-text">
+                    <h3>Mini Games</h3>
+                    <p>Trivia, tic-tac-toe, rolling dice, and economy points system.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                <div class="feature-text">
+                    <h3>Cloud Backup</h3>
+                    <p>Auto DB export, MongoDB/JSON backup, settings migration.</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div class="feature-text">
+                    <h3>Analytics Dashboard</h3>
+                    <p>Message stats, active users, commands usage, daily reports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live metrics: uptime & stats simulation -->
+    <div class="stats-row">
+        <div class="stat-glow">
+            <div class="stat-number" id="uptimeCounter">00:00:00</div>
+            <div class="stat-label"><i class="fas fa-clock"></i> UPTIME (SESSION)</div>
+        </div>
+        <div class="stat-glow">
+            <div class="stat-number" id="commandCounter">0</div>
+            <div class="stat-label"><i class="fas fa-terminal"></i> COMMANDS EXECUTED</div>
+        </div>
+        <div class="stat-glow">
+            <div class="stat-number" id="activeGroups">0</div>
+            <div class="stat-label"><i class="fas fa-users"></i> ACTIVE CHATS</div>
+        </div>
+    </div>
+
+    <div class="developer">
+        <span><i class="fas fa-code-branch"></i> Developed by <strong>MR LOFT</strong> | LOFT-OSS</span>
+        <span><i class="fas fa-globe"></i> <a href="#">Quantum Engine 2.0</a></span>
+        <span><i class="fab fa-whatsapp"></i> 24/7 Active Protection</span>
+    </div>
+</div>
+
+<script>
+    // ========== DYNAMIC TIME DISPLAY ==========
+    function updateInfo() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const dayName = dayNames[now.getDay()];
+        const date = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        
+        const timeString = `${hours}:${minutes}:${seconds}`;
+        const infoString = `🕒 ${timeString}  |  📅 ${date}  |  🌙 ${dayName}`;
+        document.getElementById('Info').innerHTML = infoString;
+    }
+
+    // ========== UPTIME SIMULATOR (since page load / deploy) ==========
+    let startTime = Date.now();
+    let commandExecuted = Math.floor(Math.random() * 380) + 480;  // starting impressive stats
+    let activeChats = Math.floor(Math.random() * 120) + 85;
+    
+    // smooth increment for realistic feeling
+    function updateUptime() {
+        const elapsed = Date.now() - startTime;
+        const totalSeconds = Math.floor(elapsed / 1000);
+        const hrs = Math.floor(totalSeconds / 3600);
+        const mins = Math.floor((totalSeconds % 3600) / 60);
+        const secs = totalSeconds % 60;
+        const uptimeStr = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        document.getElementById('uptimeCounter').innerText = uptimeStr;
+        
+        // increment command counter dynamically every 12-20 sec to simulate activity
+        // and increase active chats randomly but elegantly
+        if (Math.random() < 0.2) {  // occasionally change commands
+            commandExecuted += Math.floor(Math.random() * 3) + 1;
+            document.getElementById('commandCounter').innerText = commandExecuted.toLocaleString();
+        }
+        if (Math.random() < 0.1) {
+            // simulate fluctuation in active groups, but stay within range
+            let change = Math.floor(Math.random() * 5) - 2;
+            let newChats = activeChats + change;
+            if (newChats > 65 && newChats < 210) activeChats = newChats;
+            document.getElementById('activeGroups').innerText = activeChats.toLocaleString();
+        }
+    }
+    
+    // initiate counters with starting values
+    document.getElementById('commandCounter').innerText = commandExecuted.toLocaleString();
+    document.getElementById('activeGroups').innerText = activeChats.toLocaleString();
+    
+    // also simulate growing commands every few seconds to appear live
+    setInterval(() => {
+        // additional random increments for vibrancy
+        let randomInc = Math.floor(Math.random() * 2); // 0 or 1
+        if (randomInc === 1) {
+            commandExecuted += 1;
+            document.getElementById('commandCounter').innerText = commandExecuted.toLocaleString();
+        }
+        let chatFluctuation = Math.floor(Math.random() * 4) - 1;
+        let newVal = activeChats + chatFluctuation;
+        if (newVal >= 70 && newVal <= 200) {
+            activeChats = newVal;
+            document.getElementById('activeGroups').innerText = activeChats.toLocaleString();
+        }
+    }, 5000);
+    
+    // run uptime & command updates frequently
+    setInterval(updateUptime, 1000);
+    setInterval(updateInfo, 1000);
+    updateInfo();
+    
+    // Optional: cool glowing effect on stats (extra polish)
+    const statBoxes = document.querySelectorAll('.stat-glow');
+    statBoxes.forEach(box => {
+        box.addEventListener('mouseenter', () => {
+            box.style.transition = 'all 0.2s';
+            box.style.borderColor = '#c084fc';
+            box.style.boxShadow = '0 0 12px rgba(168,85,247,0.5)';
+        });
+        box.addEventListener('mouseleave', () => {
+            box.style.borderColor = 'rgba(168, 85, 247, 0.4)';
+            box.style.boxShadow = 'none';
+        });
+    });
+    
+    // Interactive fake "pulse" sync with the bot status simulation
+    console.log("LOFT QUANTUM BOT | Dashboard fully loaded | Active & Secure");
+    
+    // update background gradient subtle move? not needed, but adds extra effect
+    let hue = 270;
+    setInterval(() => {
+        // subtle background change for the container border (just for cool factor)
+        const container = document.querySelector('.quantum-container');
+        if (container) {
+            let newBorderColor = `rgba(156, 80, 230, ${Math.sin(Date.now() / 5000) * 0.1 + 0.25})`;
+            container.style.borderColor = newBorderColor;
+        }
+    }, 800);
+</script>
+</body>
+</html>
