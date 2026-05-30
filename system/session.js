@@ -29,50 +29,81 @@ async function loadSessionFromId() {
             });
         }
 
-        if (!SESSION_ID || typeof SESSION_ID !== 'string') {
+        const sessionId = process.env.SESSION_ID || null;
+        
+        if (!sessionId || sessionId === 'null' || sessionId === 'undefined') {
             console.log("⚠️ No SESSION_ID provided, will create new session");
             return null;
         }
 
-        let sessionId = SESSION_ID;
-        
-        // Check if it's a Loft format session
-        if (sessionId.includes('~')) {
-            const [header, b64data] = sessionId.split('~');
-
-            if (header !== "Loft" || !b64data) {
-                console.log("⚠️ Invalid session format. Expected 'Loft~.....'");
-                return null;
-            }
-
-            // Check if it's a valid base64 compressed data
-            if (!b64data.startsWith('H4sI')) {
-                console.log("⚠️ Invalid session format. Full session ID should start with 'Loft~H4sI'");
-                return null;
-            }
-
-            console.log("📂 Loading session from SESSION_ID...");
-            
-            // Clean base64 data
-            const cleanB64 = b64data.replace(/\.\.\./g, '');
-            
-            // Decode and decompress
-            const compressedData = Buffer.from(cleanB64, 'base64');
-            const decompressedData = zlib.gunzipSync(compressedData);
-
-            // Save session file
-            if (!fs.existsSync(sessionDir)) {
-                fs.mkdirSync(sessionDir, { recursive: true });
-            }
-
-            fs.writeFileSync(sessionPath, decompressedData, "utf8");
-            console.log("✅ Session File Loaded Successfully from SESSION_ID");
-            
-            return JSON.parse(decompressedData);
+        // Check format
+        if (!sessionId.includes('~')) {
+            console.log("⚠️ Invalid SESSION_ID format, missing '~'");
+            return null;
         }
         
-        return null;
+        const parts = sessionId.split('~');
+        if (parts.length !== 2) {
+            console.log("⚠️ Invalid SESSION_ID format, expected 'Loft~...'");
+            return null;
+        }
+        
+        const [header, b64data] = parts;
 
+        if (header !== "Loft") {
+            console.log("⚠️ Invalid session header, expected 'Loft'");
+            return null;
+        }
+
+        if (!b64data || b64data.length < 100) {
+            console.log("⚠️ Session data is too short or empty");
+            return null;
+        }
+
+        console.log(`📂 Loading session (${b64data.length} chars)...`);
+        
+        // Decode base64
+        let compressedData;
+        try {
+            compressedData = Buffer.from(b64data, 'base64');
+        } catch (e) {
+            console.log("❌ Invalid base64 data:", e.message);
+            return null;
+        }
+        
+        if (!compressedData || compressedData.length === 0) {
+            console.log("❌ Compressed data is empty");
+            return null;
+        }
+        
+        // Decompress
+        let decompressedData;
+        try {
+            decompressedData = zlib.gunzipSync(compressedData);
+        } catch (e) {
+            console.log("❌ Failed to decompress session:", e.message);
+            console.log("⚠️ Session data may be corrupted");
+            return null;
+        }
+        
+        // Parse JSON
+        let creds;
+        try {
+            creds = JSON.parse(decompressedData);
+        } catch (e) {
+            console.log("❌ Invalid session JSON:", e.message);
+            return null;
+        }
+        
+        // Save to file
+        if (!fs.existsSync(sessionDir)) {
+            fs.mkdirSync(sessionDir, { recursive: true });
+        }
+        fs.writeFileSync(sessionPath, JSON.stringify(creds, null, 2), "utf8");
+        
+        console.log("✅ Session loaded successfully!");
+        return creds;
+        
     } catch (e) {
         console.error("❌ Session Error:", e.message);
         return null;
@@ -83,6 +114,7 @@ async function loadSessionFromId() {
 async function loadSessionFromFolder() {
     try {
         if (!fs.existsSync(sessionPath)) {
+            console.log("⚠️ No session folder found");
             return null;
         }
         const sessionData = fs.readFileSync(sessionPath, "utf8");
@@ -97,6 +129,11 @@ async function loadSessionFromFolder() {
 // ========== SAVE SESSION TO ID STRING ==========
 async function saveSessionToId(sessionData) {
     try {
+        if (!sessionData) {
+            console.log("⚠️ No session data to save");
+            return null;
+        }
+        
         const jsonString = JSON.stringify(sessionData);
         const compressed = zlib.gzipSync(jsonString);
         const base64Data = compressed.toString('base64');
@@ -123,6 +160,11 @@ async function saveSessionToId(sessionData) {
 // ========== SAVE SESSION TO FOLDER ==========
 async function saveSessionToFolder(sessionData) {
     try {
+        if (!sessionData) {
+            console.log("⚠️ No session data to save");
+            return false;
+        }
+        
         if (!fs.existsSync(sessionDir)) {
             fs.mkdirSync(sessionDir, { recursive: true });
         }
@@ -139,6 +181,7 @@ async function saveSessionToFolder(sessionData) {
 async function getCurrentSessionId() {
     try {
         if (!fs.existsSync(sessionPath)) {
+            console.log("⚠️ No session file found");
             return null;
         }
         const sessionData = fs.readFileSync(sessionPath, "utf8");
@@ -163,7 +206,7 @@ function sleep(ms) {
 }
 
 function isUrl(url) {
-    return url.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'gi'));
+    return url ? url.match(new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'gi')) : null;
 }
 
 function isNumber(number) {
