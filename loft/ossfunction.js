@@ -5,16 +5,14 @@ const fs = require('fs');
 const zlib = require('zlib');
 
 // ========== SESSION CONFIGURATION ==========
-const sessionDir = path.join(__dirname, 'session');
+const sessionDir = path.join(__dirname, '..', 'loft', 'session');
 const sessionPath = path.join(sessionDir, 'creds.json');
 
-// CONFIG - Weka SESSION_ID yako hapa (full session tu)
-const config = {
-    SESSION_ID: process.env.SESSION_ID || "Loft~H4sIAAAAAAAA..." // Weka full session ID yako
-};
+// CONFIG - Weka SESSION_ID yako hapa au kwenye environment variable
+const SESSION_ID = process.env.SESSION_ID || null;
 
 // ========== TEMP DIRECTORY ==========
-const tempDir = path.join(__dirname, 'temp');
+const tempDir = path.join(__dirname, '..', 'temp');
 if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
 }
@@ -37,8 +35,8 @@ try {
     console.log("⚠️ ffmpeg not available - no conversion");
 }
 
-// ========== LOAD SESSION (LOCAL ONLY - NO SERVER) ==========
-async function loadSession() {
+// ========== LOAD SESSION (FROM SESSION_ID STRING) ==========
+async function loadSessionFromId() {
     try {
         // Clean existing session files
         if (fs.existsSync(sessionDir)) {
@@ -50,50 +48,83 @@ async function loadSession() {
             });
         }
 
-        if (!config.SESSION_ID || typeof config.SESSION_ID !== 'string') {
-            throw new Error("❌ SESSION_ID is missing or invalid");
+        if (!SESSION_ID || typeof SESSION_ID !== 'string') {
+            console.log("⚠️ No SESSION_ID provided, will create new session");
+            return null;
         }
 
-        let sessionId = config.SESSION_ID;
-        const [header, b64data] = sessionId.split('~');
-
-        if (header !== "Loft" || !b64data) {
-            throw new Error("❌ Invalid session format. Expected 'Loft~.....'");
-        }
-
-        // Check if it's a valid base64 compressed data
-        if (!b64data.startsWith('H4sI')) {
-            throw new Error("❌ Invalid session format. Full session ID should start with 'Loft~H4sI'");
-        }
-
-        console.log("📂 Loading session locally...");
+        let sessionId = SESSION_ID;
         
-        // Clean base64 data
-        const cleanB64 = b64data.replace(/\.\.\./g, '');
-        
-        // Decode and decompress
-        const compressedData = Buffer.from(cleanB64, 'base64');
-        const decompressedData = zlib.gunzipSync(compressedData);
+        // Check if it's a Loft format session
+        if (sessionId.includes('~')) {
+            const [header, b64data] = sessionId.split('~');
 
-        // Save session file
-        if (!fs.existsSync(sessionDir)) {
-            fs.mkdirSync(sessionDir, { recursive: true });
+            if (header !== "Loft" || !b64data) {
+                console.log("⚠️ Invalid session format. Expected 'Loft~.....'");
+                return null;
+            }
+
+            // Check if it's a valid base64 compressed data
+            if (!b64data.startsWith('H4sI')) {
+                console.log("⚠️ Invalid session format. Full session ID should start with 'Loft~H4sI'");
+                return null;
+            }
+
+            console.log("📂 Loading session from SESSION_ID...");
+            
+            // Clean base64 data
+            const cleanB64 = b64data.replace(/\.\.\./g, '');
+            
+            // Decode and decompress
+            const compressedData = Buffer.from(cleanB64, 'base64');
+            const decompressedData = zlib.gunzipSync(compressedData);
+
+            // Save session file
+            if (!fs.existsSync(sessionDir)) {
+                fs.mkdirSync(sessionDir, { recursive: true });
+            }
+
+            fs.writeFileSync(sessionPath, decompressedData, "utf8");
+            console.log("✅ Session File Loaded Successfully from SESSION_ID");
+            
+            // Return session data as JSON
+            return JSON.parse(decompressedData);
+        } else {
+            // Try to load as regular session folder
+            if (fs.existsSync(sessionPath)) {
+                const sessionData = fs.readFileSync(sessionPath, "utf8");
+                console.log("✅ Session loaded from local folder");
+                return JSON.parse(sessionData);
+            }
         }
-
-        fs.writeFileSync(sessionPath, decompressedData, "utf8");
-        console.log("✅ Session File Loaded Successfully");
         
-        // Return session data as JSON
-        return JSON.parse(decompressedData);
+        return null;
 
     } catch (e) {
         console.error("❌ Session Error:", e.message);
-        throw e;
+        return null;
     }
 }
 
-// ========== SAVE SESSION (Create new session ID) ==========
-async function saveSession(sessionData) {
+// ========== LOAD SESSION FROM FOLDER (REGULAR) ==========
+async function loadSessionFromFolder() {
+    try {
+        if (!fs.existsSync(sessionPath)) {
+            console.log("⚠️ No existing session found, will create new");
+            return null;
+        }
+        
+        const sessionData = fs.readFileSync(sessionPath, "utf8");
+        console.log("✅ Session loaded from local folder");
+        return JSON.parse(sessionData);
+    } catch (e) {
+        console.error("❌ Session folder load error:", e.message);
+        return null;
+    }
+}
+
+// ========== SAVE SESSION (Create new session ID string) ==========
+async function saveSessionToId(sessionData) {
     try {
         // Compress session data
         const jsonString = JSON.stringify(sessionData);
@@ -116,6 +147,39 @@ async function saveSession(sessionData) {
         return newSessionId;
     } catch (e) {
         console.error("❌ Save Session Error:", e.message);
+        return null;
+    }
+}
+
+// ========== SAVE SESSION TO FOLDER (REGULAR) ==========
+async function saveSessionToFolder(sessionData) {
+    try {
+        if (!fs.existsSync(sessionDir)) {
+            fs.mkdirSync(sessionDir, { recursive: true });
+        }
+        fs.writeFileSync(sessionPath, JSON.stringify(sessionData, null, 2), "utf8");
+        console.log("✅ Session saved to folder");
+        return true;
+    } catch (e) {
+        console.error("❌ Save to folder error:", e.message);
+        return false;
+    }
+}
+
+// ========== GET CURRENT SESSION ID STRING ==========
+async function getCurrentSessionId() {
+    try {
+        if (!fs.existsSync(sessionPath)) {
+            return null;
+        }
+        
+        const sessionData = fs.readFileSync(sessionPath, "utf8");
+        const compressed = zlib.gzipSync(sessionData);
+        const base64Data = compressed.toString('base64');
+        
+        return `Loft~${base64Data}`;
+    } catch (e) {
+        console.error("❌ Get session ID error:", e.message);
         return null;
     }
 }
@@ -251,25 +315,34 @@ function dBinary(str) {
 // ========== MAIN INITIALIZATION ==========
 async function initialize() {
     try {
-        console.log("🚀 Initializing...");
-        const sessionCreds = await loadSession();
-        console.log("📱 Session loaded successfully!");
-        console.log("🔑 Credentials keys:", Object.keys(sessionCreds));
+        console.log("🚀 Initializing session manager...");
+        const sessionCreds = await loadSessionFromId();
+        
+        if (sessionCreds) {
+            console.log("📱 Session loaded successfully!");
+            console.log("🔑 Credentials keys:", Object.keys(sessionCreds));
+        } else {
+            console.log("📱 No existing session, will create new on pairing");
+        }
+        
         return sessionCreds;
     } catch (error) {
         console.error("❌ Initialization failed:", error.message);
-        throw error;
+        return null;
     }
 }
 
 // ========== EXPORTS ==========
 module.exports = {
     // Session functions
-    loadSession,
-    saveSession,
+    loadSessionFromId,
+    loadSessionFromFolder,
+    saveSessionToId,
+    saveSessionToFolder,
+    getCurrentSessionId,
     sessionDir,
     sessionPath,
-    config,
+    SESSION_ID,
     
     // Original functions
     dBinary,
