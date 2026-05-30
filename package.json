@@ -20,6 +20,7 @@
     "cheerio": "^1.0.0-rc.12",
     "cloudscraper": "^4.6.0",
     "cookie": "^0.5.0",
+    "express": "^4.19.2",
     "gifted-btns": "^1.0.2",
     "canvafy": "^7.2.0",
     "sequelize": "*",
