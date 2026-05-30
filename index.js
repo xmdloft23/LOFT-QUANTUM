@@ -5,18 +5,18 @@ const {
     fetchLatestBaileysVersion,
     makeCacheableSignalKeyStore,
     jidDecode,
-    proto
 } = require("@whiskeysockets/baileys")
 
 const chalk = require('chalk');
 const pino = require('pino');
 const fs = require('fs');
-const readline = require('readline');
 const path = require('path');
+const readline = require('readline');
+const express = require('express');
 const config = require('./settings/config');
-const usePairingCode = true; 
 
 const { smsg } = require('./system/storage.js');
+const sessionManager = require('./system/session.js');
 
 let modeSettings = config.MODE || {
     publicMode: true,
@@ -25,169 +25,43 @@ let modeSettings = config.MODE || {
     autoStatus: false
 };
 
-// ================ SESSION ID HANDLER ================
-function getSessionIdFromEnv() {
-    // Check environment variable
-    if (process.env.SESSION_ID && process.env.SESSION_ID !== '') {
-        console.log(chalk.green('✅ Session ID found in environment variables'));
-        return process.env.SESSION_ID;
+const usePairingCode = true;
+
+// =============== SESSION PATH MANAGEMENT ===============
+function getSessionPath() {
+    const { SESSION_ID } = sessionManager;
+    if (SESSION_ID && SESSION_ID !== 'null' && SESSION_ID !== 'undefined' && SESSION_ID !== '') {
+        const sessionFolder = `session_${SESSION_ID.substring(0, 20)}`;
+        return path.join(__dirname, "loft", sessionFolder);
     }
-    return null;
+    return path.join(__dirname, "loft", "session");
 }
 
-function getSessionIdFromFile() {
-    // Check session.json file
-    const sessionFile = path.join(__dirname, 'session.json');
-    if (fs.existsSync(sessionFile)) {
-        try {
-            const sessionData = JSON.parse(fs.readFileSync(sessionFile, 'utf8'));
-            if (sessionData.sessionId && sessionData.sessionId !== '') {
-                console.log(chalk.green('✅ Session ID found in session.json'));
-                return sessionData.sessionId;
-            }
-        } catch (e) {
-            console.log(chalk.red('Error reading session.json:', e.message));
-        }
-    }
-    return null;
-}
-
-function getSessionIdFromDotEnv() {
-    // Check .env file
-    const envFile = path.join(__dirname, '.env');
-    if (fs.existsSync(envFile)) {
-        try {
-            const envContent = fs.readFileSync(envFile, 'utf8');
-            const match = envContent.match(/SESSION_ID=["']?([^"'\n]+)["']?/);
-            if (match && match[1] && match[1] !== '') {
-                console.log(chalk.green('✅ Session ID found in .env file'));
-                return match[1];
-            }
-        } catch (e) {
-            console.log(chalk.red('Error reading .env:', e.message));
-        }
-    }
-    return null;
-}
-
-function saveSessionId(sessionId) {
-    const sessionFile = path.join(__dirname, 'session.json');
-    try {
-        const data = { 
-            sessionId, 
-            savedAt: new Date().toISOString(),
-            deviceName: 'LOFT—OSS Bot'
-        };
-        fs.writeFileSync(sessionFile, JSON.stringify(data, null, 2));
-        console.log(chalk.green('✅ Session ID saved to session.json'));
-        
-        // Also save to .env
-        const envFile = path.join(__dirname, '.env');
-        let envContent = '';
-        if (fs.existsSync(envFile)) {
-            envContent = fs.readFileSync(envFile, 'utf8');
-            if (envContent.includes('SESSION_ID=')) {
-                envContent = envContent.replace(/SESSION_ID=.*/g, `SESSION_ID=${sessionId}`);
-            } else {
-                envContent += `\nSESSION_ID=${sessionId}\n`;
-            }
-        } else {
-            envContent = `SESSION_ID=${sessionId}\n`;
-        }
-        fs.writeFileSync(envFile, envContent);
-        console.log(chalk.green('✅ Session ID saved to .env file'));
-        
-        return true;
-    } catch (e) {
-        console.log(chalk.red('Error saving session ID:', e.message));
-        return false;
-    }
-}
-
-function getSessionId() {
-    // Try different sources in order
-    let sessionId = getSessionIdFromEnv();
-    if (sessionId) return sessionId;
-    
-    sessionId = getSessionIdFromFile();
-    if (sessionId) return sessionId;
-    
-    sessionId = getSessionIdFromDotEnv();
-    if (sessionId) return sessionId;
-    
-    console.log(chalk.yellow('⚠️ No session ID found. Will request phone number for pairing.'));
-    return null;
-}
-
-const SESSION_ID = getSessionId();
-// ================ END SESSION ID HANDLER ================
-
-// ================ PAIRING CODE WITH COUNTRY CODE ================
 const question = (text) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     return new Promise(resolve => rl.question(text, resolve));
 };
 
-async function getPhoneNumber() {
-    console.log(chalk.cyan('\n═══════════════════════════════════════'));
-    console.log(chalk.yellow.bold('📱 WHATSAPP PAIRING SETUP'));
-    console.log(chalk.cyan('═══════════════════════════════════════\n'));
-    
-    console.log(chalk.white('Examples of valid numbers:'));
-    console.log(chalk.gray('   • 255712345678 (Tanzania)'));
-    console.log(chalk.gray('   • 254712345678 (Kenya)'));
-    console.log(chalk.gray('   • 256712345678 (Uganda)'));
-    console.log(chalk.gray('   • 234812345678 (Nigeria)'));
-    console.log(chalk.gray('   • 923456789012 (Pakistan)'));
-    console.log(chalk.gray('   • 628123456789 (Indonesia)\n'));
-    
-    let phoneNumber = '';
-    while (!phoneNumber) {
-        const input = await question(chalk.yellow.bold('📞 Enter phone number with country code (e.g., 255712345678):\n➤ '));
-        phoneNumber = input.trim().replace(/[^0-9]/g, '');
-        
-        if (!phoneNumber) {
-            console.log(chalk.red('❌ Phone number cannot be empty! Please try again.\n'));
-        } else if (phoneNumber.length < 10) {
-            console.log(chalk.red('❌ Phone number is too short! Include country code (e.g., 255...)\n'));
-            phoneNumber = '';
-        } else if (phoneNumber.length > 15) {
-            console.log(chalk.red('❌ Phone number is too long! Maximum 15 digits\n'));
-            phoneNumber = '';
-        } else {
-            // Validate country code (simple check for common codes)
-            const countryCode = phoneNumber.substring(0, 3);
-            const validCodes = ['255', '254', '256', '234', '92', '62', '91', '1', '44', '61', '27', '33', '49', '34', '39', '52', '55', '81', '82', '86'];
-            if (!validCodes.some(code => phoneNumber.startsWith(code))) {
-                console.log(chalk.yellow(`⚠️ Warning: ${countryCode} might not be a valid country code. Continue anyway? (y/n)`));
-                const confirm = await question('➤ ');
-                if (confirm.toLowerCase() !== 'y') {
-                    phoneNumber = '';
-                    continue;
-                }
-            }
-            console.log(chalk.green(`✅ Phone number accepted: ${phoneNumber}\n`));
-        }
-    }
-    
-    return phoneNumber;
-}
-// ================ END PAIRING CODE ================
-
 async function connectToWhatsApp() {
-    // Check if we have existing session
-    const sessionPath = './session';
-    const hasExistingSession = fs.existsSync(sessionPath) && fs.readdirSync(sessionPath).length > 0;
+    const currentSessionPath = getSessionPath();
     
-    if (hasExistingSession) {
-        console.log(chalk.cyan('📂 Existing session found, attempting to load...'));
+    if (!fs.existsSync(currentSessionPath)) {
+        fs.mkdirSync(currentSessionPath, { recursive: true });
     }
     
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+    console.log(chalk.cyan(`📂 Session path: ${currentSessionPath}`));
     
-    // Check if credentials are already registered
-    const isRegistered = state.creds && state.creds.registered;
+    // Try to load existing session from SESSION_ID first
+    const loadedCreds = await sessionManager.loadSessionFromId();
     
+    const { state, saveCreds } = await useMultiFileAuthState(currentSessionPath);
+    
+    // If we have loaded creds from SESSION_ID, merge them
+    if (loadedCreds && !state.creds.registered) {
+        console.log(chalk.green("✅ Merging loaded session credentials"));
+        Object.assign(state.creds, loadedCreds);
+    }
+
     const { version } = await fetchLatestBaileysVersion();
 
     const socket = makeWASocket({
@@ -195,7 +69,7 @@ async function connectToWhatsApp() {
         printQRInTerminal: !usePairingCode,
         syncFullHistory: false,
         markOnlineOnConnect: true,
-        browser: ['LOFT—OSS', 'Chrome', '1.0.0'],
+        browser: ['Ubuntu', 'Chrome', '20.0.04'],
         logger: pino({ level: 'silent' }),
         auth: {
             creds: state.creds,
@@ -203,47 +77,10 @@ async function connectToWhatsApp() {
         }
     });
 
-    // Request pairing code if no existing session
-    if (usePairingCode && !isRegistered && !hasExistingSession) {
-        console.log(chalk.cyan('\n🔄 No existing session detected. Setting up new device...\n'));
-        const phoneNumber = await getPhoneNumber();
-        
-        console.log(chalk.cyan('\n⏳ Requesting pairing code from WhatsApp...'));
-        try {
-            const code = await socket.requestPairingCode(phoneNumber);
-            console.log(chalk.green('\n═══════════════════════════════════════'));
-            console.log(chalk.black.bgGreen.bold('           LOFT—OSS PAIRING CODE          '));
-            console.log(chalk.green('═══════════════════════════════════════'));
-            console.log(chalk.white.bgBlue.bold(`            ${code}            `));
-            console.log(chalk.green('═══════════════════════════════════════'));
-            console.log(chalk.yellow('\n⚠️ Enter this code in WhatsApp Linked Devices\n'));
-            
-            // Generate and save session ID
-            const newSessionId = `LOFT_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
-            saveSessionId(newSessionId);
-            
-        } catch (error) {
-            console.log(chalk.red('❌ Failed to get pairing code:'), error.message);
-            console.log(chalk.yellow('🔄 Retrying in 5 seconds...'));
-            setTimeout(connectToWhatsApp, 5000);
-            return;
-        }
-    } else if (usePairingCode && !isRegistered && hasExistingSession) {
-        console.log(chalk.yellow('⚠️ Session files exist but not registered. Please delete ./session folder and restart.\n'));
-        const phoneNumber = await getPhoneNumber();
-        
-        try {
-            const code = await socket.requestPairingCode(phoneNumber);
-            console.log(chalk.green('\n═══════════════════════════════════════'));
-            console.log(chalk.black.bgGreen.bold('           LOFT—OSS PAIRING CODE          '));
-            console.log(chalk.green('═══════════════════════════════════════'));
-            console.log(chalk.white.bgBlue.bold(`            ${code}            `));
-            console.log(chalk.green('═══════════════════════════════════════'));
-        } catch (error) {
-            console.log(chalk.red('❌ Failed to get pairing code:'), error.message);
-            setTimeout(connectToWhatsApp, 5000);
-            return;
-        }
+    if (usePairingCode && !socket.authState.creds.registered) {
+        const phoneNumber = await question(chalk.yellow('📱 Input Number (Example: 255xxxxxxxxxx):\n'));
+        const code = await socket.requestPairingCode(phoneNumber.trim());
+        console.log(chalk.black.bgGreen.bold(' LOFT—OSS PAIRING CODE: ') + chalk.white.bgBlue.bold(` ${code} `));
     }
 
     socket.ev.on('connection.update', async (update) => {
@@ -251,69 +88,41 @@ async function connectToWhatsApp() {
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             if (statusCode !== DisconnectReason.loggedOut) {
-                console.log(chalk.yellow(`⚠️ Connection closed, reconnecting in 5 seconds...`));
-                console.log(chalk.gray(`Reason: ${lastDisconnect?.error?.message || 'Unknown'}`));
+                console.log(chalk.yellow(`⚠️ Connection closed, reconnecting in 5s...`));
                 setTimeout(connectToWhatsApp, 5000);
             } else {
-                console.log(chalk.red('\n❌ Logged Out! Session expired or invalid.'));
-                console.log(chalk.yellow('🔄 Delete ./session folder and restart bot to create new session.\n'));
+                console.log(chalk.red('❌ Logged Out!'));
+                if (sessionManager.SESSION_ID) {
+                    console.log(chalk.yellow(`📱 Your session ID was set. To reuse, keep same SESSION_ID`));
+                }
             }
         } else if (connection === 'open') {
-            // Get bot info
-            const botJid = socket.user?.id?.split(':')[0] + '@s.whatsapp.net';
-            const botName = socket.user?.name || 'LOFT—OSS Bot';
+            console.log(chalk.green.bold('🟢 LOFT—OSS Connected Successfully! 🚀'));
             
-            // CONNECTED MESSAGE
-            console.log(chalk.green.bold('\n═══════════════════════════════════════'));
-            console.log(chalk.green.bold('🟢 LOFT—OSS CONNECTED SUCCESSFULLY! 🚀'));
-            console.log(chalk.green.bold('═══════════════════════════════════════'));
-            console.log(chalk.white(`📱 Device:     ${chalk.cyan(botName)}`));
-            console.log(chalk.white(`📊 Status:     ${chalk.green('Online ✓')}`));
-            console.log(chalk.white(`⏰ Time:       ${chalk.yellow(new Date().toLocaleString())}`));
-            console.log(chalk.white(`🔑 Session ID: ${chalk.magenta(SESSION_ID || 'New Session')}`));
-            console.log(chalk.white(`📞 Bot Number: ${chalk.cyan(botJid || 'Unknown')}`));
-            console.log(chalk.green.bold('═══════════════════════════════════════\n'));
-            
-            // Send welcome message to owner if configured
-            if (config.OWNER_NUM && config.OWNER_NUM !== '') {
-                try {
-                    const ownerJid = config.OWNER_NUM.includes('@') ? config.OWNER_NUM : config.OWNER_NUM + '@s.whatsapp.net';
-                    await socket.sendMessage(ownerJid, {
-                        text: `🟢 *LOFT—OSS Bot Connected!*\n\n` +
-                              `📱 *Device:* ${botName}\n` +
-                              `⏰ *Time:* ${new Date().toLocaleString()}\n` +
-                              `🔑 *Session ID:* ${SESSION_ID || 'New'}\n` +
-                              `📞 *Bot Number:* ${botJid}\n\n` +
-                              `🚀 Bot is now active and ready to serve!`
-                    });
-                    console.log(chalk.gray('📨 Welcome message sent to owner'));
-                } catch (e) {
-                    console.log(chalk.red('Failed to send welcome message to owner:', e.message));
+            // Save session as compressed ID for backup
+            if (socket.authState.creds.registered) {
+                const sessionIdString = await sessionManager.saveSessionToId(socket.authState.creds);
+                if (sessionIdString && !sessionManager.SESSION_ID) {
+                    console.log(chalk.yellow.bold('\n💾 SAVE THIS SESSION ID FOR FUTURE USE:\n'));
+                    console.log(chalk.green.bold(sessionIdString));
+                    console.log(chalk.yellow.bold('\n📋 Copy this and use as SESSION_ID environment variable\n'));
                 }
             }
             
-            // Send heartbeat every 30 seconds to keep connection alive
-            const heartbeatInterval = setInterval(async () => {
+            // Send heartbeat every 30 seconds
+            setInterval(async () => {
                 try {
                     await socket.sendPresenceUpdate('available');
-                    console.log(chalk.gray('💓 WhatsApp heartbeat sent'));
-                } catch (e) {
-                    console.log(chalk.red('Heartbeat failed:', e.message));
-                    clearInterval(heartbeatInterval);
-                }
+                } catch (e) {}
             }, 30000);
             
-            // Follow newsletter if configured
             try {
                 await socket.newsletterFollow('120363398106360290@newsletter');
-                console.log(chalk.gray('📰 Newsletter followed'));
-            } catch (e) {
-                // Silent fail
-            }
+            } catch {}
         }
     });
 
-    // GROUP PARTICIPANTS UPDATE (WELCOME & GOODBYE)
+    // GROUP PARTICIPANTS UPDATE
     socket.ev.on('group-participants.update', async (update) => {
         const { id, participants, action } = update;
         if (!config.GROUP?.WELCOME && !config.GROUP?.GOODBYE) return;
@@ -337,7 +146,7 @@ async function connectToWhatsApp() {
             if (action === 'remove' && config.GROUP?.GOODBYE) {
                 await socket.sendMessage(id, {
                     image: { url: pp },
-                    caption: `*Goodbye!*\n\n@${user.split('@')[0]} left the group.\n\nWe will never miss you! 💔\n\nPowered by LOFT—OSS`,
+                    caption: `*Goodbye!*\n\n@${user.split('@')[0]} left the group.\n\nWe will miss you! 💔\n\nPowered by LOFT—OSS`,
                     mentions: [user]
                 });
             }
@@ -350,14 +159,12 @@ async function connectToWhatsApp() {
             const mek = chatUpdate.messages[0];
             if (!mek || !mek.message) return;
 
-            // AUTO STATUS LIKE + VIEW
             if (mek.key.remoteJid === 'status@broadcast') {
                 if (modeSettings.autoStatus) {
                     await socket.readMessages([mek.key]);
                     await socket.sendMessage(mek.key.remoteJid, {
                         react: { text: "❤️", key: mek.key }
                     });
-                    console.log(chalk.magenta(`[AUTO STATUS] ❤️ Liked status from ${mek.pushName || 'Unknown'}`));
                 }
                 return;
             }
@@ -382,7 +189,13 @@ async function connectToWhatsApp() {
         }
     });
 
-    socket.ev.on('creds.update', saveCreds);
+    socket.ev.on('creds.update', async (creds) => {
+        await saveCreds();
+        // Save as compressed ID whenever creds update
+        if (creds.registered) {
+            await sessionManager.saveSessionToId(creds);
+        }
+    });
 
     socket.decodeJid = (jid) => {
         if (!jid) return jid;
@@ -404,24 +217,19 @@ async function connectToWhatsApp() {
             }
         });
     };
-    
-    // Store session ID in socket for later use
-    socket.sessionId = SESSION_ID;
 }
 
-// KEEP ALIVE - Prevent bot from sleeping
-const https = require('https');
+// =============== KEEP ALIVE SERVER ===============
 const PORT = process.env.PORT || 3000;
-
-// Create simple HTTP server for health checks
 const server = require('http').createServer((req, res) => {
     if (req.url === '/health') {
+        res.writeHead(200);
+        res.end('Bot is alive!');
+    } else if (req.url === '/session') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
-            status: 'alive', 
-            sessionId: SESSION_ID,
-            uptime: process.uptime(),
-            timestamp: new Date().toISOString()
+            hasSessionId: !!sessionManager.SESSION_ID,
+            sessionPath: getSessionPath()
         }));
     } else {
         res.writeHead(404);
@@ -430,48 +238,41 @@ const server = require('http').createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-    console.log(chalk.green(`✅ Health check server running on port ${PORT}`));
-    console.log(chalk.gray(`   Health endpoint: http://localhost:${PORT}/health`));
+    console.log(chalk.green(`✅ Server running on port ${PORT}`));
 });
 
-// Auto ping every 5 minutes to keep awake
+// Auto ping every 5 minutes
 setInterval(() => {
     console.log(chalk.cyan('🔄 Keeping bot alive...'));
 }, 300000);
 
-// Also ping yourself every 10 minutes
+// Ping self every 10 minutes
 setInterval(() => {
     if (process.env.RENDER_EXTERNAL_URL) {
-        https.get(`${process.env.RENDER_EXTERNAL_URL}/health`, (res) => {
-            console.log(chalk.gray(`💓 Ping self: ${res.statusCode}`));
-        }).on('error', (err) => {
-            console.log(chalk.red(`Ping error: ${err.message}`));
-        });
+        const https = require('https');
+        https.get(`${process.env.RENDER_EXTERNAL_URL}/health`, () => {});
     }
 }, 600000);
 
-// Prevent crashes from unhandled errors
+// Prevent crashes
 process.on('uncaughtException', (err) => {
-    console.log(chalk.red('Uncaught Exception:', err.message));
-    console.log(chalk.gray(err.stack));
+    console.log(chalk.red('Uncaught Exception:', err));
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
     console.log(chalk.red('Unhandled Rejection:', reason));
 });
 
-// Display startup info
-console.log(chalk.cyan.bold('\n╔═══════════════════════════════════════╗'));
-console.log(chalk.cyan.bold('║        LOFT—OSS WHATSAPP BOT          ║'));
-console.log(chalk.cyan.bold('╚═══════════════════════════════════════╝\n'));
-
-if (SESSION_ID) {
-    console.log(chalk.green(`🔑 Using Session ID: ${chalk.white(SESSION_ID)}`));
+// Start bot
+console.log(chalk.cyan('\n╔═══════════════════════════════════════╗'));
+console.log(chalk.cyan('║       LOFT—OSS SESSION MANAGER        ║'));
+console.log(chalk.cyan('╠═══════════════════════════════════════╣'));
+if (sessionManager.SESSION_ID) {
+    console.log(chalk.green(`║  SESSION ID: ${sessionManager.SESSION_ID.substring(0, 30)}...║`));
 } else {
-    console.log(chalk.yellow('🔑 No Session ID found - will create new session on pairing'));
+    console.log(chalk.yellow(`║  SESSION ID: not set (new session)   ║`));
 }
-
-console.log(chalk.gray(`\n📂 Session directory: ./session`));
-console.log(chalk.gray(`🌐 Health server: http://localhost:${PORT}\n`));
+console.log(chalk.cyan(`║  PORT: ${String(PORT).padEnd(30)}║`));
+console.log(chalk.cyan('╚═══════════════════════════════════════╝\n'));
 
 connectToWhatsApp();
